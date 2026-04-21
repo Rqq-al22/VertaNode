@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VertaNode | Urban Farming Dashboard</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Google Fonts for Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Premium Material Symbols (Modern Icon Set) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  
+  <!-- Header Navbar -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="material-symbols-rounded" style="font-size:36px; color:var(--accent-green);">eco</span>
+        <div class="logo-text">
+          <span class="logo-title">VertaNode</span>
+          <span class="logo-subtitle">Intelligent Microclimate System</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="badge badge-offline" id="connection-badge">
+        <div class="badge-dot"></div>
+        <span id="connection-text">MENYAMBUNGKAN</span>
+      </div>
+      <span class="last-update" id="last-update">Menunggu respons sensor...</span>
+    </div>
+
+    <div class="header-right">
+      <span class="mode-label">Mode Kontrol</span>
+      <label class="mode-toggle" aria-label="Toggle Control Mode">
+        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+        <div class="toggle-track">
+          <span class="toggle-auto">AUTO</span>
+          <span class="toggle-manual">MANUAL</span>
+          <div class="toggle-thumb"></div>
+        </div>
+      </label>
+    </div>
+  </header>
+
+  <!-- Container Notifikasi -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Konten Utama -->
+  <main class="main-content">
+    
+    <!-- Bagian Node Sensor -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="material-symbols-rounded">sensors</span> Parameter Lingkungan
+      </h2>
+      <div class="sensor-grid" id="sensor-grid">
+        
+        <!-- Kartu Suhu -->
+        <div class="sensor-card" id="card-temperature">
+          <div class="sensor-icon-wrap temp-icon">
+            <span class="material-symbols-rounded">device_thermostat</span>
+          </div>
+          <span class="sensor-name">Suhu Udara</span>
+          <div class="sensor-value-wrap">
+            <span class="sensor-value" id="val-temperature">--</span>
+            <span class="sensor-unit">°C</span>
+          </div>
+          <div class="sensor-status-block">
+            <div class="sensor-bar-wrap">
+              <div class="sensor-bar" id="bar-temperature"></div>
+            </div>
+            <span class="sensor-label" id="label-temperature">Membaca Data...</span>
+          </div>
+        </div>
+
+        <!-- Kartu Kelembapan -->
+        <div class="sensor-card" id="card-humidity">
+          <div class="sensor-icon-wrap hum-icon">
+            <span class="material-symbols-rounded">water_drop</span>
+          </div>
+          <span class="sensor-name">Kelembapan Udara</span>
+          <div class="sensor-value-wrap">
+            <span class="sensor-value" id="val-humidity">--</span>
+            <span class="sensor-unit">%</span>
+          </div>
+          <div class="sensor-status-block">
+            <div class="sensor-bar-wrap">
+              <div class="sensor-bar" id="bar-humidity"></div>
+            </div>
+            <span class="sensor-label" id="label-humidity">Membaca Data...</span>
+          </div>
+        </div>
+
+        <!-- Kartu Tanah -->
+        <div class="sensor-card" id="card-soil">
+          <div class="sensor-icon-wrap soil-icon">
+            <span class="material-symbols-rounded">potted_plant</span>
+          </div>
+          <span class="sensor-name">Kelembapan Tanah</span>
+          <div class="sensor-value-wrap">
+            <span class="sensor-value" id="val-soil">--</span>
+            <span class="sensor-unit">%</span>
+          </div>
+          <div class="sensor-status-block">
+            <div class="sensor-bar-wrap">
+              <div class="sensor-bar" id="bar-soil"></div>
+            </div>
+            <span class="sensor-label" id="label-soil">Membaca Data...</span>
+          </div>
+        </div>
+
+        <!-- Kartu Cahaya -->
+        <div class="sensor-card" id="card-light">
+          <div class="sensor-icon-wrap light-icon">
+            <span class="material-symbols-rounded">light_mode</span>
+          </div>
+          <span class="sensor-name">Intensitas Cahaya</span>
+          <div class="sensor-value-wrap">
+            <span class="sensor-value" id="val-light">--</span>
+            <span class="sensor-unit">lux</span>
+          </div>
+          <div class="sensor-status-block">
+            <div class="sensor-bar-wrap">
+              <div class="sensor-bar" id="bar-light"></div>
+            </div>
+            <span class="sensor-label" id="label-light">Membaca Data...</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Visualisasi Grafik -->
+    <section class="section">
+      <div class="glass-card chart-card">
+        <h2 class="section-title">
+          <span class="material-symbols-rounded">show_chart</span> Fluktuasi Iklim Mikro (Live)
+        </h2>
+        <div style="position: relative; height:280px; width:100%">
+          <canvas id="envChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layout Grid Bawah -->
+    <div class="bottom-grid">
+      
+      <!-- List Aktuator -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="material-symbols-rounded">settings_power</span> Status Aktuator VertaNode
+        </h2>
+        <div class="actuator-list">
+          
+          <div class="glass-card actuator-card" id="actuator-pump">
+            <div class="actuator-header">
+              <span class="material-symbols-rounded actuator-icon" style="color:#3b82f6;">sprinkler</span>
+              <div class="actuator-info">
+                <div class="actuator-name">Pompa Air Irigasi</div>
+                <div class="actuator-reason">Menjaga Hidrasi Tanah</div>
+              </div>
+              <div class="actuator-right">
+                <span class="status-badge" id="badge-pump">STANDBY</span>
+                <label class="act-toggle">
+                  <input type="checkbox" id="toggle-pump" onchange="manualToggle('pump', this.checked)">
+                  <div class="act-track"><div class="act-thumb"></div></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card actuator-card" id="actuator-light">
+            <div class="actuator-header">
+              <span class="material-symbols-rounded actuator-icon" style="color:#f59e0b;">lightbulb</span>
+              <div class="actuator-info">
+                <div class="actuator-name">Lampu Grow Light</div>
+                <div class="actuator-reason">Kompensasi Cahaya Tanam</div>
+              </div>
+              <div class="actuator-right">
+                <span class="status-badge" id="badge-light">STANDBY</span>
+                <label class="act-toggle">
+                  <input type="checkbox" id="toggle-light" onchange="manualToggle('light', this.checked)">
+                  <div class="act-track"><div class="act-thumb"></div></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card actuator-card" id="actuator-fan">
+            <div class="actuator-header">
+              <span class="material-symbols-rounded actuator-icon" style="color:#10b981;">mode_fan</span>
+              <div class="actuator-info">
+                <div class="actuator-name">Kipas Sirkulasi</div>
+                <div class="actuator-reason">Mendinginkan Suhu Ruang</div>
+              </div>
+              <div class="actuator-right">
+                <span class="status-badge" id="badge-fan">STANDBY</span>
+                <label class="act-toggle">
+                  <input type="checkbox" id="toggle-fan" onchange="manualToggle('fan', this.checked)">
+                  <div class="act-track"><div class="act-thumb"></div></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Panel Pengaturan dan Log -->
+      <div class="right-panel">
+        <section class="section">
+          <div class="glass-card settings-card">
+            <h2 class="section-title">
+              <span class="material-symbols-rounded">tune</span> Threshold Target Sistem
+            </h2>
+            
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Target Suhu Maks.</span>
+                <span class="slider-val"><span id="val-tempTarget">28</span>°C</span>
+              </div>
+              <input type="range" id="slider-tempTarget" min="20" max="40" step="1" value="28" oninput="document.getElementById('val-tempTarget').textContent=this.value">
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Batas Tanah Min.</span>
+                <span class="slider-val"><span id="val-soilMin">40</span>%</span>
+              </div>
+              <input type="range" id="slider-soilMin" min="10" max="80" step="5" value="40" oninput="document.getElementById('val-soilMin').textContent=this.value">
+            </div>
+
+            <div class="settings-buttons">
+              <button class="btn btn-secondary" onclick="resetSettings()">Batal</button>
+              <button class="btn btn-primary" onclick="applySettings()">Simpan Konfigurasi</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="glass-card log-card">
+            <div style="padding: 24px 24px 10px;">
+              <div class="log-header-row">
+                <h2 class="section-title" style="margin:0;">
+                  <span class="material-symbols-rounded">history</span> Sistem Log
+                </h2>
+                <button class="btn btn-secondary btn-sm" onclick="clearLog()">Bersihkan</button>
+              </div>
+            </div>
+            <div class="log-list" id="log-list">
+              <!-- Render logic JavaScript -->
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>© 2026 VertaNode Makassar Project.</span>
+    <span>Sistem Pertanian Presisi Perkotaan Berbasis IoT.</span>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
